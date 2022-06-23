@@ -1,0 +1,18 @@
+---
+title: "DY Data Dog's Breakfast"
+author: "Johannes Burgers"
+date: "6/23/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Introduction
+
+The following is a series of charts and visualizations that were inspired by discussions for the NEH grant *Teaching and Learning William Faulkner in the Digital Age*. These discussions revolved around using the *Digital Yoknapatawpha* site to help enrich student understanding fo Faulkner at all levels through various technological interventions. The visualizations are not currently available on the official *DY* site, but have been created using the *DY* data.
+
+## Who is the lonieliest number?
+
