@@ -134,7 +134,7 @@ novel_lonely_percent %>%
     labs(title="Percentage of Events where Character Appears Alone by Novel", 
          x="Novel", y = "Percent")
 ```
-This global overview gives a good snapshot of variety of characterization Faulkner uses throughout his career. In some he works he is more inclined to build characters in isolation while in others it is by portraying their relationships to other characters. Of course, how these character potrayals are distributed within the text flattened out by the above chart, and drilling down into the text can produce some productive insights.
+This global overview gives a good snapshot of variety of characterization Faulkner uses throughout his career. In some works he is more inclined to build characters in isolation, while in others it is by portraying their relationships to other characters. Of course, how these character potrayals are distributed within the text flattened out by the above chart, and drilling down into the text can produce some productive insights.
 
 
 ### *The Sound and the Fury*
