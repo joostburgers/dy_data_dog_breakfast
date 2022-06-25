@@ -70,11 +70,72 @@ database_full <- events_clean %>%
 
 ## Introduction
 
-The following is a series of charts and visualizations that were inspired by discussions for the NEH grant *Teaching and Learning William Faulkner in the Digital Age*. These discussions revolved around using the *Digital Yoknapatawpha* site to help enrich student understanding fo Faulkner at all levels through various technological interventions. The visualizations are not currently available on the official *DY* site, but have been created using the *DY* data.
+The following is a series of charts and visualizations that were inspired by discussions for the NEH grant *Teaching and Learning William Faulkner in the Digital Age*. These conversations revolved around using the *Digital Yoknapatawpha* site to help enrich student understanding of Faulkner at all levels through various technological interventions. The visualizations are not currently available on the official *DY* site, but have been created using the *DY* data.
 
 ## One is the loneliest number
 
-One way to think about character representation in Faulkner's work is the number of occasions they appear alone. In essence, this is a character's "screen time." While the event data can provide frequency of times alone in a scene, it cannot shed light on duration. For example, a character who is alone two times throughout a novel in a very short sequence, is technically alone more than a character who is alone only once for two pages. These numbers can therefore be distorting at low-frequencies. Nevertheless, where the major characters are concerned these patterns tend to be somewhat more reliable.
+One way to think about character representation in Faulkner's work is the number of occasions they appear alone. In essence, this is a character's "screen time," if the text were a movie. While the event data can provide frequency of times alone in a scene, it cannot shed light on duration. For example, a character who is alone two times throughout a novel in a very short sequence, is technically alone more than a character who is alone only once for two pages. These numbers can therefore be distorting at low-frequencies. Nevertheless, where the major characters are concerned these patterns tend to be somewhat more reliable.
+
+```{r lone_character}
+
+corpus_alone <- database_full %>% 
+                filter(PresentMentioned == "Present") %>%
+                filter(IndividualGroup == "Individual") %>% 
+                  group_by(Nid) %>% 
+                  add_count(Nid) %>% 
+                  filter(n == 1)
+
+corpus_alone_by_text <- database_full %>% 
+                filter(PresentMentioned == "Present") %>%
+                filter(IndividualGroup == "Individual") %>% 
+                  group_by(SourceTextCode) %>% 
+                  mutate(event_count = n_distinct(Nid)) %>% 
+                  add_count(Nid) %>% 
+                  filter(n == 1) %>% 
+                  mutate(percent = sum(n)/event_count) %>% 
+                  distinct(SourceTextTitle, percent)
+
+corpus_alone_by_text_max <- corpus_alone_by_text %>% 
+                            ungroup() %>% 
+                            slice_max(percent, n=1)
+corpus_alone_by_text_min <- corpus_alone_by_text %>% 
+                            ungroup() %>% 
+                            slice_min(percent, n=1)
+                                    
+                  
+
+corpus_alone_percent <- round(nrow(corpus_alone)/nrow(events)*100,0)
+                
+
+```
+
+```{r novel_lonely_percent}
+
+novel_lonely_percent <- corpus_alone_by_text %>% 
+                        filter(!str_detect(SourceTextTitle, '\\"')) %>% 
+                        mutate(marked = ifelse(str_detect(SourceTextTitle,"Sound|Dying"),TRUE,FALSE))
+
+mean_lonely <- mean(novel_lonely_percent$percent)
+
+```
+
+
+If we look at the entire corpus then characters are alone in an event around `r corpus_alone_percent`% of the time. Of course, the distribution could vary greatly from text to text. The text where a character is alone the most is `r corpus_alone_by_text_max$SourceTextTitle` here the focus is on a single character `r round(corpus_alone_by_text_max$percent*100,0)`% of the time. On the opposite end of the spectrum is the story `r corpus_alone_by_text_min$SourceTextTitle`, here we only see a character alone in`r round(corpus_alone_by_text_min$percent*100,0)`% of events. If we look across the novels, we'll note that *As I Lay Dying* and *The Sound and the Fury* are below the average of portraying characters by themselves (`r round(mean_lonely*100,0)`%).
+
+```{r}
+novel_lonely_percent %>% 
+  ggplot(aes( x=reorder(SourceTextTitle,percent), y=percent, fill=marked))+
+  geom_bar(stat = "identity")+
+  scale_y_continuous(labels = scales::percent_format(scale = 100))+
+  theme_clean()+
+  coord_flip()+
+   theme(legend.position="none")+
+  scale_fill_brewer(palette="Dark1")+
+    labs(title="Percentage of Events where Character Appears Alone by Novel", 
+         x="Novel", y = "Percent")
+```
+This global overview gives a good snapshot of variety of characterization Faulkner uses throughout his career. In some he works he is more inclined to build characters in isolation while in others it is by portraying their relationships to other characters. Of course, how these character potrayals are distributed within the text flattened out by the above chart, and drilling down into the text can produce some productive insights.
+
 
 ### *The Sound and the Fury*
 
@@ -83,18 +144,19 @@ One way to think about character representation in Faulkner's work is the number
 
 compson_single <- database_full %>% 
                   filter(SourceTextCode == "SF") %>% 
-                  filter(Family == "Compson") %>%  
                   filter(PresentMentioned == "Present") %>% 
                   group_by(Nid) %>% 
                   add_count(Nid) %>% 
                   filter(n == 1) %>% 
+                   #filter(Family == "Compson") %>% 
                   group_by(Gender) %>%  
                   count(CharacterName)
 
 compson_events <- database_full %>% 
                   filter(SourceTextCode == "SF") %>% 
                   distinct(Nid) %>% 
-                  nrow()
+                  nrow() %>% 
+                  as.numeric()
 
 single_character_sf <-  database_full %>% 
                   filter(SourceTextCode == "SF") %>% 
@@ -102,12 +164,14 @@ single_character_sf <-  database_full %>%
                   group_by(Nid) %>% 
                   add_count(Nid) %>% 
                   filter(n == 1) %>% 
-                  nrow()
-                  
+                  nrow() %>% 
+                  as.numeric()
+                 
 
 ```
 
-*The Sound and the Fury* has been broken down into `r compson_events` in `r single_character_sf` events, or `r round((single_character_sf/compson_events)*100,0)`% of the text, there is a character who is alone. This alone time is not equally distributed among the Compson family and is heavily tilted towards the men. What is remarkable is how little Caddy actually appears by herself, only once. Of course, it is easy to overlook one character who never appears alone at all Miss Quentin. Her narration is also in conjunction with others.
+*The Sound and the Fury* has been broken down into `r compson_events` in `r single_character_sf` events, or `r round((single_character_sf/compson_events)*100,0)` % of the text, there is a character who is alone. This alone time is not equally distributed among the Compson family and is heavily tilted towards the three sons. The only characters, beyond Jason, Benjy, and Quentin to ever appear alone are Luster and Dilsey.
+
 
 ```{r}
 compson_single %>%
@@ -129,7 +193,6 @@ The data suggests that the women of *SF* are rarely considered in isolation, and
 
 compson_mentioned <- database_full %>% 
                   filter(SourceTextCode == "SF") %>% 
-                  filter(Family == "Compson") %>%  
                   filter(PresentMentioned == "Mentioned") %>% 
                   group_by(Gender) %>% 
                   count(CharacterName) %>% 
@@ -157,9 +220,9 @@ Yet a different way to consider the how the Compsons are represented is the narr
 
 sf_narrative_status <- database_full %>% 
                       filter(SourceTextCode == "SF") %>% 
+                      filter(PresentMentioned == "Present") %>% 
                   filter(Family == "Compson") %>% 
-                  filter(PresentMentioned == "Present") %>% 
-                    group_by(CharacterName) %>% 
+                       group_by(CharacterName) %>% 
                     count(NarrativeStatus) %>% 
                     mutate(percent = round(n/sum(n)*100,0)) %>% 
                     mutate(sum = sum(n)) %>% 
@@ -218,7 +281,7 @@ bundren_single %>%
   mutate(CharacterName = str_remove_all(CharacterName," Bundren")) %>% 
   ggplot( aes(x=reorder(CharacterName,n), y=n, fill= Gender))+
   geom_bar(stat= "identity")+
-    labs(title="Number of Times Characters Appears Alone", 
+    labs(title="Number of Times Characters Appear Alone", 
          x="Character", y = "Frequency")+
   geom_text(aes(label=n))+
   theme_clean()+
@@ -227,9 +290,15 @@ bundren_single %>%
 
 Given the low frequency of characters appearing alone, it makes little sense to attach too much value to the relative differences between the characters who appear alone. More generally though, it indicates how intimately related to one another these characters are. 
 
-Due to the spatial intimacy of the characters, it might be interesting to explore which characters tend to have the strongest relationships with one another. One way to measure this is through co-occurrence. Co-occurrence analysis determines how characters or groups of characters interact as a pattern. 
+Due to the spatial intimacy of the characters, it might be interesting to explore which characters tend to have the strongest relationships with one another. One way to measure this is through co-occurrence. Co-occurrence analysis determines how characters or groups of characters interact as a pattern. It does so by looking at the total presence of each character with another character across the text and calculating which ones are statistically significant. This can have three results:
 
-```{r co_occurrence}
++ If there is a **positive** co-occurrence then one character appears with another at a higher than expected rate.
++ If there is a **negative** co-occurrence then one character appears with another character at a much lower than expected rate. Generally, when one character is present another is absent. 
++ Co-occurrence can also have no statistical significance. This means that there is no measurable pattern of co-occurrence either way. Of course, this does not mean that the two characters meeting or not meeting is insignificant in a literary sense.
+
+
+
+```{r co_occurrence, cache=TRUE}
 
 co_occurrence_matrix <- database_full %>% 
   filter(SourceTextCode == "LD") %>% 
@@ -326,4 +395,6 @@ top_table_plot <- top_table_plot %>%
 
 top_table_plot
 ```
+
+Perhaps the most pronounced pattern in *As I Lay Dying* is the fact that Anse and Addie appear to have inverse relationships with Vardaman and Dewey Dell. While the youngest Bundren children tend to appear with their father quite often, they are less frequently featured in events where Addie is present. This needs to be taken with some caution. Undoubtedly, the two children are present around the coffin during the long voyage to Jefferson, but they do not receive narrative attention. Interestingly, Anse does not have a postive co-occurrence relationship with his two middle children Darl and Jewel, though the two are often found together.
 
