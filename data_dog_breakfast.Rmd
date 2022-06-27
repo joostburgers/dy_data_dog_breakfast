@@ -16,6 +16,8 @@ library(ggthemes)
 library(rmdformats)
 library(cooccur)
 library(plotly)
+library(wordcloud)
+library(RColorBrewer)
 ```
 
 
@@ -167,7 +169,6 @@ single_character_sf <-  database_full %>%
                   nrow() %>% 
                   as.numeric()
                  
-
 ```
 
 *The Sound and the Fury* has been broken down into `r compson_events` in `r single_character_sf` events, or `r round((single_character_sf/compson_events)*100,0)` % of the text, there is a character who is alone. This alone time is not equally distributed among the Compson family and is heavily tilted towards the three sons. The only characters, beyond Jason, Benjy, and Quentin to ever appear alone are Luster and Dilsey.
@@ -397,4 +398,105 @@ top_table_plot
 ```
 
 Perhaps the most pronounced pattern in *As I Lay Dying* is the fact that Anse and Addie appear to have inverse relationships with Vardaman and Dewey Dell. While the youngest Bundren children tend to appear with their father quite often, they are less frequently featured in events where Addie is present. This needs to be taken with some caution. Undoubtedly, the two children are present around the coffin during the long voyage to Jefferson, but they do not receive narrative attention. Interestingly, Anse does not have a postive co-occurrence relationship with his two middle children Darl and Jewel, though the two are often found together.
+
+## Keywords
+
+Each event in *DY* has been encoded with a keyword. These keywords cover several broad areas:
+
++ Environments
++ Actions
++ Cultural Issues
++ Themes & Motifs
++ Relationships
++ Aesthetics
+
+Within these major categories there are second-order keywords and third-order keywords. As a result, the list of total possible keywords is quite extensive and ranged in the thousands of keywords. Needless to say, the editors strove to be as consistent as possible, but given the thousands of events and the thousands of events the data is far from perfect across the corpus. Nevertheless, all keywords were entered and re-entered by the editors for each individual text, and this process of peer-review assured that the keywording for each individual text was at least internally consistent. It is therefore best to avoid corpus-wide analysis of this data and be more consertative in attaching too much value to an evolving data set. 
+
+
+```{r all_keywords}
+
+all_keywords <- events %>%
+                pivot_longer(cols = starts_with("kw_"), names_to = "keywords", names_prefix = "kw_", values_to = "second_term") %>% 
+    separate_rows(second_term, sep=" \\| ") %>% 
+    mutate(third_term = str_extract(second_term, "(?<=\\> ).*")) %>% 
+    mutate(second_term = str_remove(second_term, "(?<= ).*")) %>% 
+    mutate(second_term = str_squish(second_term)) %>% 
+    mutate(single_term = ifelse(!is.na(second_term),second_term,keywords)) %>% 
+    mutate(single_term = ifelse(!is.na(third_term), third_term, single_term)) %>% 
+    mutate(root_term = paste(keywords, 
+        ifelse(!is.na(second_term), paste(" : ", second_term, sep=""),""),                            ifelse(!is.na(third_term), paste(" :: ",third_term, sep=""),""),                               sep = ""))
+
+
+```
+
+### Sound and the Fury
+
+#### Option 1: Coalesced Keywords
+
+Deciding which keyword to focus on can be tricky. As *DY* leaves it to the discretion of the editor to enter first, second, and third order keywords, by necessity first order keywords will surface more.
+
+```{r sf_keywords}
+
+sf_keywords_all <- all_keywords %>% 
+               filter(SourceTextCode=="SF") %>% 
+               count(single_term, root_term)
+
+```
+
+
+```{r sf_wordcloud}
+
+wordcloud(words = sf_keywords_all$single_term, freq = sf_keywords_all$n, min.freq = 5,
+          max.words=200, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+
+```
+
+#### Option 2: Most detailed term keywords
+
+Meanwhile, focusing only on the most specific terms will actually overlook at lot of the partial data and reduce the relative difference between terms.
+
+```{r}
+sf_keywords_third <- all_keywords %>% 
+               filter(SourceTextCode=="SF") %>% 
+               count(third_term)
+```
+
+```{r}
+wordcloud(words = sf_keywords_third$third_term, freq = sf_keywords_third$n, min.freq = 5,
+          max.words=50, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+
+```
+
+#### Option 3: Rooted Keyword
+
+A third option is to use the root term, which will lead to a very confusing diagram.
+
+```{r}
+sf_keywords_root <- all_keywords %>% 
+               filter(SourceTextCode=="SF") %>% 
+               count(root_term)
+```
+
+```{r}
+wordcloud(words = sf_keywords_root$root_term, freq = sf_keywords_root$n, min.freq = 5,
+          max.words=50, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+```
+
+### As I Lay Dying
+
+```{r}
+AILD_keywords <- all_keywords %>% 
+               filter(SourceTextCode=="LD") %>% 
+               count(single_term, root_term)
+```
+
+
+```{r}
+wordcloud(words = AILD_keywords$single_term, freq = AILD_keywords$n, min.freq = 5,
+          max.words=200, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+```
 
