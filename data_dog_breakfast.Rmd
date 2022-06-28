@@ -2,7 +2,7 @@
 title: "*DY* Data Dog's Breakfast"
 author: "Johannes Burgers"
 date: "6/23/2022"
-output: rmdformats::html_clean
+output: html_document
 knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_file = file.path(dirname(inputFile), 'index.html')) })
 ---
 
@@ -448,8 +448,8 @@ sf_keywords_all <- all_keywords %>%
 
 ```{r sf_wordcloud}
 
-wordcloud2(sf_keywords_all, size = 1, minSize = 5, color='random-dark')
-
+sf_wordcloud <- wordcloud2(sf_keywords_all, size = 1, minSize = 5, color='random-dark')
+sf_wordcloud
 ```
 
 #### Option 2: Most detailed term keywords
@@ -464,7 +464,8 @@ sf_keywords_third <- all_keywords %>%
 ```
 
 ```{r}
-wordcloud2(sf_keywords_third, size = 1, minSize = 5, color='random-dark')
+sf_wordcloud_third <- wordcloud2(sf_keywords_third, size = 1, minSize = 5, color='random-dark')
+sf_wordcloud_third
 
 ```
 
