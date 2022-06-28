@@ -18,6 +18,7 @@ library(cooccur)
 library(plotly)
 library(wordcloud)
 library(RColorBrewer)
+library(wordcloud2)
 ```
 
 
@@ -439,16 +440,15 @@ Deciding which keyword to focus on can be tricky. As *DY* leaves it to the discr
 
 sf_keywords_all <- all_keywords %>% 
                filter(SourceTextCode=="SF") %>% 
-               count(single_term, root_term)
+               count(single_term) %>% 
+                drop_na()
 
 ```
 
 
 ```{r sf_wordcloud}
 
-wordcloud(words = sf_keywords_all$single_term, freq = sf_keywords_all$n, min.freq = 5,
-          max.words=200, random.order=FALSE, rot.per=0.35, 
-          colors=brewer.pal(8, "Dark2"))
+wordcloud2(sf_keywords_all, size = 1, minSize = 5, color='random-dark')
 
 ```
 
@@ -459,13 +459,12 @@ Meanwhile, focusing only on the most specific terms will actually overlook at lo
 ```{r}
 sf_keywords_third <- all_keywords %>% 
                filter(SourceTextCode=="SF") %>% 
-               count(third_term)
+               count(third_term) %>% 
+                drop_na()
 ```
 
 ```{r}
-wordcloud(words = sf_keywords_third$third_term, freq = sf_keywords_third$n, min.freq = 5,
-          max.words=50, random.order=FALSE, rot.per=0.35, 
-          colors=brewer.pal(8, "Dark2"))
+wordcloud2(sf_keywords_third, size = 1, minSize = 5, color='random-dark')
 
 ```
 
@@ -480,9 +479,7 @@ sf_keywords_root <- all_keywords %>%
 ```
 
 ```{r}
-wordcloud(words = sf_keywords_root$root_term, freq = sf_keywords_root$n, min.freq = 5,
-          max.words=50, random.order=FALSE, rot.per=0.35, 
-          colors=brewer.pal(8, "Dark2"))
+wordcloud2(sf_keywords_root, size = 1, minSize = 4, color='random-dark')
 ```
 
 ### As I Lay Dying
@@ -490,13 +487,25 @@ wordcloud(words = sf_keywords_root$root_term, freq = sf_keywords_root$n, min.fre
 ```{r}
 AILD_keywords <- all_keywords %>% 
                filter(SourceTextCode=="LD") %>% 
-               count(single_term, root_term)
+               count(third_term) %>% 
+                drop_na()
 ```
 
 
 ```{r}
-wordcloud(words = AILD_keywords$single_term, freq = AILD_keywords$n, min.freq = 5,
-          max.words=200, random.order=FALSE, rot.per=0.35, 
-          colors=brewer.pal(8, "Dark2"))
+wordcloud2(AILD_keywords, size = 1, minSize = 0, color='random-dark')
+```
+
+### Memphis as a space
+
+Because people wanted to know...the answer is kind of obvious!
+
+```{r}
+memphis <-  all_keywords %>% 
+            filter(str_detect(Location,"Memphis")) %>% 
+              count(single_term)
+
+wordcloud2(memphis, size = 1, minSize = 2, color='random-dark')
+
 ```
 
